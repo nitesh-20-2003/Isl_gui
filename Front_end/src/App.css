@@ -1,0 +1,22 @@
+/* App.css */
+.container {
+  text-align: center;
+  padding: 20px;
+}
+
+.camera-feed video {
+  width: 400px;
+  height: auto;
+  border: 2px solid #000;
+}
+
+.controls {
+  margin-top: 20px;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
