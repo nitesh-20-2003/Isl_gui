@@ -1,5 +1,5 @@
 import axios from "axios";
 const CustomFetch = axios.create({
-  baseURL: "http://localhost:3000/api/v1/Landmarks",
+  baseURL: "http://localhost:8000",
 });
 export default CustomFetch;

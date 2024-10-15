@@ -2,7 +2,8 @@ const express = require("express");
 const app = express();
 const morgan = require("morgan");
 require("dotenv").config();
-
+const cors = require('cors');
+app.use(cors());
 // routes
 
 const Landmarks=require('./routes/Landmarks')
@@ -15,7 +16,7 @@ app.use(morgan('tiny'));
 app.get('/',(req,res)=>{
   res.send('Hello world');
 })
-app.use('/api/v1/Landmarks',Landmarks)
+app.use('/Landmarks',Landmarks)
 
 app.use(notFound)
 

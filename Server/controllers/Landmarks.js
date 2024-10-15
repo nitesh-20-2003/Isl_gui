@@ -11,5 +11,6 @@ const Landmarks = (req, res, next) => {
     },
   });
 };
-
 module.exports = { Landmarks };
+
+
