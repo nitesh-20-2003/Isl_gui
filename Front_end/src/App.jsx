@@ -84,15 +84,30 @@ function App() {
 
       // Send landmarks to the server
       if (leftHand.length > 0) {
-        await CustomFetch.post("/Landmarks", {
-          leftLandmarks: leftHand,
-        });
+        try {
+      const prediction_left=      await CustomFetch.post("/predict", {
+              leftLandmarks: leftHand,
+            });
+            // const data=await prediction_left.json();
+
+            console.log(prediction_left)
+        } catch (error) {
+          console.log(error)
+        }
+      
       }
 
       if (rightHand.length > 0) {
-        await CustomFetch.post("/Landmarks", {
-          rightLandmarks: rightHand,
-        });
+       try {
+      const prediction_right=   await CustomFetch.post("/predict", {
+           rightLandmarks: rightHand,
+         });
+          // const data = await prediction_right.json();
+
+          // console.log(data);
+       } catch (error) {
+          console.log(error)
+       }
       }
     }
   };
