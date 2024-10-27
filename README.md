@@ -22,5 +22,7 @@ To run the server and frontend for this project, please follow these steps:
      ```bash
      npm run dev
      ```
+4. On Console you will see predicted text from the model.
+   
 
 Your application should now be up and running!
