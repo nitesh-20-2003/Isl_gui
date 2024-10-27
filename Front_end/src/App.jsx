@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import Webcam from "react-webcam";
 import { Hands } from "@mediapipe/hands";
-import { drawHand } from "./Components/drawLandmarks"; // Assume you're still using this to draw landmarks.
-import * as cam from "@mediapipe/camera_utils"; // MediaPipe's utility for webcam
-import CustomFetch from "./utils/CustomFetch"; // Import your CustomFetch
+import { drawHand } from "./Components/drawLandmarks";
+import * as cam from "@mediapipe/camera_utils";
+import axios from "axios"; // Make sure to install axios
 
 function App() {
   const webcamRef = useRef(null);
@@ -12,6 +12,7 @@ function App() {
 
   const [leftHandLandmarks, setLeftHandLandmarks] = useState([]);
   const [rightHandLandmarks, setRightHandLandmarks] = useState([]);
+  const [suggestion, setSuggestion] = useState(""); // State for suggestion
 
   useEffect(() => {
     const hands = new Hands({
@@ -43,6 +44,7 @@ function App() {
     }
   }, []);
 
+  // This function processes the landmarks and sends them to the backend
   const onResults = async (results) => {
     const videoWidth = webcamRef.current.video.videoWidth;
     const videoHeight = webcamRef.current.video.videoHeight;
@@ -51,7 +53,6 @@ function App() {
     canvasRef.current.height = videoHeight;
 
     const ctx = canvasRef.current.getContext("2d");
-
     ctx.clearRect(0, 0, videoWidth, videoHeight);
 
     const leftHand = [];
@@ -62,6 +63,7 @@ function App() {
         const landmarks = results.multiHandLandmarks[i];
         let handedness = results.multiHandedness[i].label;
 
+        // Handle camera mirroring for user-facing camera
         if (
           webcamRef.current.video.srcObject &&
           webcamRef.current.video.srcObject.getTracks()[0].getSettings()
@@ -76,55 +78,63 @@ function App() {
           rightHand.push(landmarks);
         }
 
-        drawHand(landmarks, ctx);
+        drawHand(landmarks, ctx); // Draw the hand landmarks
       }
 
       setLeftHandLandmarks(leftHand);
       setRightHandLandmarks(rightHand);
 
-      // Send landmarks to the server
-      if (leftHand.length > 0) {
-        try {
-      const prediction_left=      await CustomFetch.post("/predict", {
-              leftLandmarks: leftHand,
-            });
-            // const data=await prediction_left.json();
+      // Send landmarks to backend
+      if (leftHand.length > 0 || rightHand.length > 0) {
+        const landmarksToSend = {
+          landmarks:
+            leftHand.length > 0
+              ? leftHand[0].map((point) => ({ x: point.x, y: point.y }))
+              : [],
+        };
 
-            console.log(prediction_left)
+        try {
+          const response = await axios.post(
+            "http://127.0.0.1:5000/Landmarks",
+            landmarksToSend
+          );
+
+          // Log the response to the console
+          console.log("Response from backend:", response.data);
+
+          if (response.data && response.data.length > 0) {
+            setSuggestion(response.data[0].suggestions.join(", "));
+          }
         } catch (error) {
-          console.log(error)
+          console.error("Error sending landmarks to backend:", error);
         }
-      
+      }
+
+      // Log the landmarks to the console
+      if (leftHand.length > 0) {
+        console.log("Left Hand Landmarks:");
+        leftHand.forEach((landmarks) => {
+          // console.log(landmarks.map((point) => ({ x: point.x, y: point.y })));
+        });
       }
 
       if (rightHand.length > 0) {
-       try {
-      const prediction_right=   await CustomFetch.post("/predict", {
-           rightLandmarks: rightHand,
-         });
-          // const data = await prediction_right.json();
-
-          // console.log(data);
-       } catch (error) {
-          console.log(error)
-       }
+        console.log("Right Hand Landmarks:");
+        rightHand.forEach((landmarks) => {
+          // console.log(landmarks.map((point) => ({ x: point.x, y: point.y })));
+        });
       }
     }
   };
 
   return (
-    <div className="App">
+    <div className="App" style={{ textAlign: "center" }}>
       <header className="App-header">
         <Webcam
           ref={webcamRef}
           style={{
-            position: "absolute",
-            marginLeft: "auto",
-            marginRight: "auto",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            zIndex: 9,
+            margin: "0 auto",
+            display: "block",
             width: 640,
             height: 480,
           }}
@@ -133,23 +143,32 @@ function App() {
           ref={canvasRef}
           style={{
             position: "absolute",
-            marginLeft: "auto",
-            marginRight: "auto",
-            left: 0,
-            right: 0,
-            textAlign: "center",
+            top: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
             zIndex: 9,
             width: 640,
             height: 480,
           }}
         />
       </header>
-      <div style={{ color: "white" }}>
-        <h3>Left Hand Landmarks</h3>
-        <pre>{JSON.stringify(leftHandLandmarks, null, 2)}</pre>
-
-        <h3>Right Hand Landmarks</h3>
-        <pre>{JSON.stringify(rightHandLandmarks, null, 2)}</pre>
+      {/* Suggestion Box */}
+      <div
+        style={{
+          marginTop: "20px", // Margin from the camera
+          padding: "15px", // Padding inside the suggestion box
+          backgroundColor: "#333", // Dark background
+          color: "#fff", // White text color
+          width: "640px", // Width same as webcam
+          marginLeft: "auto", // Center horizontally
+          marginRight: "auto", // Center horizontally
+          borderRadius: "8px", // Rounded corners
+          border: "2px solid #fff", // White border
+          textAlign: "center", // Center the text
+        }}
+      >
+        <h3>Suggestion</h3>
+        <p>{suggestion || "No suggestion yet"}</p>
       </div>
     </div>
   );
